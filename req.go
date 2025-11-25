@@ -1,4 +1,3 @@
-
 package goreq
 
 import (
@@ -25,10 +24,10 @@ var (
 )
 
 // ==================== 类型别名（写起来最爽）================
-type P map[string]string          // Params
-type J map[string]any             // JSON body
-type F map[string]string          // Form body
-type H map[string]string          // Headers
+type P map[string]string // Params
+type J map[string]any    // JSON body
+type F map[string]string // Form body
+type H map[string]string // Headers
 
 // ==================== Response ====================
 type Response struct {
@@ -100,8 +99,10 @@ func (s *Session) request(method, rawurl string, body any, extra ...any) (*Respo
 
 	for _, e := range extra {
 		switch v := e.(type) {
-		case P: params = v
-		case H: headers = v
+		case P:
+			params = v
+		case H:
+			headers = v
 		}
 	}
 
@@ -172,7 +173,7 @@ func (s *Session) request(method, rawurl string, body any, extra ...any) (*Respo
 	return &Response{Response: resp, body: b}, nil
 }
 
-func (s *Session) Get(u string, extra ...any) *Response    { return s.do("GET", u, nil, extra...) }
+func (s *Session) Get(u string, extra ...any) *Response { return s.do("GET", u, nil, extra...) }
 func (s *Session) Post(u string, data any, extra ...any) *Response {
 	return s.do("POST", u, data, extra...)
 }
@@ -191,7 +192,7 @@ func do(method, u string, body any, extra ...any) *Response {
 	return r
 }
 
-func Get(u string, extra ...any) *Response    { return do("GET", u, nil, extra...) }
+func Get(u string, extra ...any) *Response { return do("GET", u, nil, extra...) }
 func Post(u string, data any, extra ...any) *Response {
 	return do("POST", u, data, extra...)
 }

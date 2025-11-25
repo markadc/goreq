@@ -124,13 +124,24 @@ func (s *Session) request(method, rawurl string, body any, extra ...any) (*Respo
 
 	if body != nil {
 		switch v := body.(type) {
-		case J, map[string]any:
+		case J:
 			b, _ := json.Marshal(v)
 			reqBody = bytes.NewReader(b)
 			contentType = "application/json"
-		case F, map[string]string:
+		case map[string]any:
+			b, _ := json.Marshal(v)
+			reqBody = bytes.NewReader(b)
+			contentType = "application/json"
+		case F:
 			f := url.Values{}
-			for k, vv := range v.(map[string]string) {
+			for k, vv := range v {
+				f.Set(k, vv)
+			}
+			reqBody = strings.NewReader(f.Encode())
+			contentType = "application/x-www-form-urlencoded"
+		case map[string]string:
+			f := url.Values{}
+			for k, vv := range v {
 				f.Set(k, vv)
 			}
 			reqBody = strings.NewReader(f.Encode())
@@ -144,10 +155,8 @@ func (s *Session) request(method, rawurl string, body any, extra ...any) (*Respo
 
 	req, _ := http.NewRequest(method, rawurl, reqBody)
 	req.Header = s.headers.Clone()
-	if headers != nil {
-		for k, v := range headers {
-			req.Header.Set(k, v)
-		}
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 	if contentType != "" && req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", contentType)

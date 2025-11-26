@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -36,12 +37,12 @@ type Response struct {
 	err  error
 }
 
-func (r *Response) Ok() bool {
+func (r *Response) OK() bool {
 	return r.StatusCode >= 200 && r.StatusCode < 300
 }
 
 func (r *Response) RaiseForStatus() {
-	if !r.Ok() {
+	if !r.OK() {
 		panic(fmt.Errorf("HTTP %d: %s", r.StatusCode, r.Text()))
 	}
 }
@@ -52,7 +53,7 @@ func (r *Response) Json() gjson.Result { return gjson.ParseBytes(r.body) }
 
 // 一行保存文件（支持超大文件、自动创建目录）
 func (r *Response) Save(filepath string) error {
-	if !r.Ok() {
+	if !r.OK() {
 		return fmt.Errorf("bad status %d, cannot save", r.StatusCode)
 	}
 	if err := os.MkdirAll(path.Dir(filepath), 0755); err != nil {
@@ -98,11 +99,19 @@ func (s *Session) request(method, rawurl string, body any, extra ...any) (*Respo
 	var headers H
 
 	for _, e := range extra {
-		switch v := e.(type) {
-		case P:
-			params = v
-		case H:
-			headers = v
+		// 使用反射检查具体类型，区分 P 和 H
+		t := reflect.TypeOf(e)
+		if t != nil {
+			switch t.String() {
+			case "goreq.P":
+				if v, ok := e.(P); ok {
+					params = v
+				}
+			case "goreq.H":
+				if v, ok := e.(H); ok {
+					headers = v
+				}
+			}
 		}
 	}
 
